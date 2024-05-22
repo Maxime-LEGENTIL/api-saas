@@ -6,6 +6,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -14,33 +15,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('users_list')]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups('users_list')]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups('users_list')]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[Groups('users_list')]
     private ?string $password = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups('users_list')]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups('users_list')]
     private ?string $lastname = null;
 
     #[ORM\Column]
+    #[Groups('users_list')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups('users_list')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function getId(): ?int

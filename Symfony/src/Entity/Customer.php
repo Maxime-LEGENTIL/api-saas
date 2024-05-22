@@ -3,10 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\CustomerRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 class Customer
@@ -14,27 +16,35 @@ class Customer
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('customers_list')]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups('customers_list')]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups('customers_list')]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 320)]
+    #[Groups('customers_list')]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::BIGINT)]
+    #[Groups('customers_list')]
     private ?string $phonenumber = null;
 
     #[ORM\Column(length: 320)]
+    #[Groups('customers_list')]
     private ?string $address = null;
 
     #[ORM\Column]
+    #[Groups('customers_list')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups('customers_list')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
@@ -45,6 +55,7 @@ class Customer
 
     public function __construct()
     {
+        $this->setCreatedAt(new DateTimeImmutable());
         $this->orders = new ArrayCollection();
     }
 

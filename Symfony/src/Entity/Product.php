@@ -15,19 +15,23 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('products_list')]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups('orders_list')]
+    #[Groups(['orders_list', 'products_list'])]
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Groups(['orders_list', 'products_list'])]
     private ?int $price = null;
 
     #[ORM\Column]
+    #[Groups('products_list')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups('products_list')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**

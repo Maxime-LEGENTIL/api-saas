@@ -9,6 +9,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 class Customer
@@ -16,41 +18,45 @@ class Customer
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 320)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Assert\Email(
+        message: 'L\'adresse email {{ value }} est invalide.',
+    )]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::BIGINT)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Assert\Positive] // Nombres positifs
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?string $phonenumber = null;
 
     #[ORM\Column(length: 320)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?string $address = null;
 
     #[ORM\Column]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, Order>
      */
-    #[Groups(['customers_list', 'orders_post'])]
+    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
 

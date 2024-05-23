@@ -16,9 +16,14 @@ use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
+
 class OrderController extends AbstractController
 {
     #[Route('/api/orders', name: 'app_order_index', methods: 'GET')]
+    #[OA\Tag(name: 'Commandes')]
     public function index(OrderRepository $orderRepository): JsonResponse
     {
         $orders = $orderRepository->findAll();
@@ -27,6 +32,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/orders/{id}', name: 'app_order_show', methods: 'GET')]
+    #[OA\Tag(name: 'Commandes')]
     public function show(int $id, OrderRepository $orderRepository): JsonResponse
     {
         $order = $orderRepository->find($id);
@@ -38,30 +44,8 @@ class OrderController extends AbstractController
         }
     }
 
-    /**
-     * Ajouter une nouvelle commande.
-     *
-     * Ajoute une nouvelle commande en base de données.
-     *
-     * @Route("/api/orders", methods={"POST"})
-     * @OA\Response(
-     *     response=200,
-     *     description="Returns the rewards of an user",
-     *     @OA\JsonContent(
-     *        type="array",
-     *        @OA\Items(ref=@Model(type=Reward::class, groups={"full"}))
-     *     )
-     * )
-     * @OA\Parameter(
-     *     name="order",
-     *     in="query",
-     *     description="The field used to order rewards",
-     *     @OA\Schema(type="string")
-     * )
-     * @OA\Tag(name="rewards")
-     * @Security(name="Bearer")
-     */
-    #[Route('/api/orders', name: 'app_order_post', methods: ['POST'])]
+    #[Route('/api/orders', name: 'app_order_post', methods: 'POST')]
+    #[OA\Tag(name: 'Commandes')]
     public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator, CustomerRepository $customerRepository): JsonResponse
     {
         try {
@@ -118,6 +102,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/orders/{id}', name: 'app_order_delete', methods: 'DELETE')]
+    #[OA\Tag(name: 'Commandes')]
     public function delete(int $id, Request $request, OrderRepository $orderRepository, SerializerInterface $serializer, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $oder = $orderRepository->find($id);
@@ -132,6 +117,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/orders/{id}', name: 'app_order_put', methods: 'PUT')]
+    #[OA\Tag(name: 'Commandes')]
     public function put(int $id, Request $request, OrderRepository $orderRepository, SerializerInterface $serializer, ValidatorInterface $validator, EntityManagerInterface $entityManager): JsonResponse
     {
         $order = $orderRepository->find($id);

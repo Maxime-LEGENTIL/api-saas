@@ -15,9 +15,41 @@ use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
+
 class CustomerController extends AbstractController
 {
+    /**
+     * Récupère la liste des clients.
+     *
+     * Récupère la liste de tous les clients de la BDD.
+     *
+     */
+    #[OA\Tag(name: 'Clients')]
     #[Route('/api/customers', name: 'app_customer_index', methods: 'GET')]
+    #[OA\Response(
+        response: 201,
+        description: 'Retourne la liste des clients.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_list']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function index(CustomerRepository $customerRepository): JsonResponse
     {
         $customers = $customerRepository->findAll();
@@ -25,7 +57,41 @@ class CustomerController extends AbstractController
         return $this->json($customers, Response::HTTP_OK, [], ["groups" => "customers_list"]);
     }
 
+    /**
+     * Récupère les informations d'un seul client.
+     *
+     * Récupère les informations d'un client en fonction de son ID en BDD.
+     *
+     */
     #[Route('/api/customers/{id}', name: 'app_customer_show', methods: 'GET')]
+    #[OA\Tag(name: 'Clients')]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'L\'id du client à récupérer.',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer'))]
+    #[OA\Response(
+        response: 201,
+        description: 'Retourne les informations du client.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function show(int $id, CustomerRepository $customerRepository): JsonResponse
     {
         $customer = $customerRepository->find($id);
@@ -33,23 +99,63 @@ class CustomerController extends AbstractController
             return $this->json($customer, Response::HTTP_OK, [], ["groups" => "customers_list"]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
         }
     }
 
+    /**
+     * Ajoute un nouveau client.
+     *
+     * Ajoute un nouveau client en BDD.
+     *
+     */
     #[Route('/api/customers', name: 'app_customer_post', methods: ['POST'])]
+    #[OA\Tag(name: 'Clients')]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            required: ['firstname', 'lastname', 'email', 'phonenumber', 'address'],
+            properties: [
+                new OA\Property(property: 'firstname', type: 'string', example: 'John'),
+                new OA\Property(property: 'lastname', type: 'string', example: 'Doe'),
+                new OA\Property(property: 'email', type: 'string', example: 'john.doe@example.com'),
+                new OA\Property(property: 'phonenumber', type: 'string', example: '1234567890'),
+                new OA\Property(property: 'address', type: 'string', example: '123 Main St')
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'Retourne le client ajouté.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: "L'entité vient d'être ajoutée."),
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
     {
         try {
             $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
-
-            //dd($request->getContent(), $customer);
             
             $errors = $validator->validate($customer);
             if (count($errors) > 0) {
                 $errorsString = (string) $errors;
                 return $this->json([
-                    'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_post"]);
@@ -59,18 +165,18 @@ class CustomerController extends AbstractController
             $entityManager->flush();
             
             return $this->json([
-                'success' => true,
-                'message' => "L'entité vient d'être ajoutée."
+                'message' => "L'entité vient d'être ajoutée.",
+                'customer' => $customer
             ], Response::HTTP_CREATED, [], ["groups" => "customers_post"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_post"]);
         }
     }
+    // Exemple pour lire un json passé en $request->getContent() et extraire les données avec json_decode
     /*$post_data = json_decode($request->getContent(), true);
     $firstname = $post_data['firstname'];
     $lastname = $post_data['lastname'];
@@ -81,7 +187,35 @@ class CustomerController extends AbstractController
     dd($firstname, $lastname, $email, $email, $phonenumber, $address);*/
                 
 
+    /**
+     * Supprime un client.
+     *
+     * Supprime un client en fonction de son ID en BDD.
+     *
+     */
     #[Route('/api/customers/{id}', name: 'app_customer_delete', methods: 'DELETE')]
+    #[OA\Tag(name: 'Clients')]
+    #[OA\Response(
+        response: 201,
+        description: 'Le client a été supprimé.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: "L'entité vient d'être supprimé avec succès.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function delete(int $id, OrderRepository $orderRepository, CustomerRepository $customerRepository, SerializerInterface $serializer, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $customer = $customerRepository->find($id);
@@ -94,20 +228,69 @@ class CustomerController extends AbstractController
 
             $entityManagerInterface->remove($customer);
             $entityManagerInterface->flush();
-            return $this->json(['success' => true, 'message' => "Le client (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["groups" => "customers_list"]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
         }
     }
 
+    /**
+     * Modifie un client.
+     *
+     * Modifie un client en BDD.
+     *
+     */
     #[Route('/api/customers/{id}', name: 'app_customer_put', methods: 'PUT')]
+    #[OA\Tag(name: 'Clients')]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'L\'id du client à mettre à jour.',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer'))]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            required: ['firstname', 'lastname', 'email', 'phonenumber', 'address'],
+            properties: [
+                new OA\Property(property: 'firstname', type: 'string', example: 'John'),
+                new OA\Property(property: 'lastname', type: 'string', example: 'Doe'),
+                new OA\Property(property: 'email', type: 'string', example: 'john.doe@example.com'),
+                new OA\Property(property: 'phonenumber', type: 'string', example: '1234567890'),
+                new OA\Property(property: 'address', type: 'string', example: '123 Main St')
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'Retourne le client modifié.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: "L'entité client vient d'être mise à jour."),
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function put(int $id, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, ValidatorInterface $validator, EntityManagerInterface $entityManager): JsonResponse
     {
         $customer = $customerRepository->find($id);
 
         if (!$customer) {
-            return $this->json(['success' => false, 'message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "customers_list"]);
         }
 
         try {
@@ -124,7 +307,6 @@ class CustomerController extends AbstractController
             if (count($errors) > 0) {
                 $errorsString = (string) $errors;
                 return $this->json([
-                    'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
@@ -135,13 +317,11 @@ class CustomerController extends AbstractController
             $entityManager->flush();
 
             return $this->json([
-                'success' => true,
                 'message' => "Le client (id ".$id.") a été mis à jour avec succès."
             ], Response::HTTP_OK, [], ["groups" => "customers_list"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);

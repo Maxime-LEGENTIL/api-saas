@@ -49,8 +49,8 @@ class AppFixtures extends Fixture
         // Order
         $order = new Order();
         $order->setCustomer($customer);
-        $order->setOderNumber(rand(2000, 99999999));
-        $order->setTotalAmmount(rand(10, 95));
+        $order->setOrderNumber(rand(2000, 99999999));
+        $order->setTotalAmount(rand(10, 95));
         $order->setCreatedAt(new DateTimeImmutable());
         //$customer->setUpdatedAt();
         $manager->persist($order);

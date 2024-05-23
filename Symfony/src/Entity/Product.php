@@ -3,9 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -16,6 +18,7 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups('orders_list')]
     private ?string $name = null;
 
     #[ORM\Column]
@@ -35,6 +38,7 @@ class Product
 
     public function __construct()
     {
+        $this->setCreatedAt(new DateTimeImmutable());
         $this->orders = new ArrayCollection();
     }
 

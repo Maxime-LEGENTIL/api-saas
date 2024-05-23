@@ -3,9 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\OrderRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -14,31 +16,39 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['orders_list', 'orders_post'])]
     private ?int $id = null;
 
     #[ORM\Column]
-    private ?int $oderNumber = null;
+     #[Groups(['orders_list', 'orders_post'])]
+    private ?int $orderNumber = null;
 
     /**
      * @var Collection<int, Product>
      */
-    #[ORM\ManyToMany(targetEntity: Product::class, inversedBy: 'orders')]
+    #[ORM\ManyToMany(targetEntity: Product::class, inversedBy: 'orders', cascade: ['persist'])]
+    #[Groups(['orders_list', 'orders_post'])]
     private Collection $products;
 
     #[ORM\Column]
-    private ?int $totalAmmount = null;
+     #[Groups(['orders_list', 'orders_post'])]
+    private ?int $totalAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
+     #[Groups(['orders_list', 'orders_post'])]
     private ?Customer $customer = null;
 
     #[ORM\Column]
+     #[Groups(['orders_list', 'orders_post'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+     #[Groups(['orders_list', 'orders_post'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
+        $this->setCreatedAt(new DateTimeImmutable());
         $this->products = new ArrayCollection();
     }
 
@@ -47,14 +57,14 @@ class Order
         return $this->id;
     }
 
-    public function getOderNumber(): ?int
+    public function getorderNumber(): ?int
     {
-        return $this->oderNumber;
+        return $this->orderNumber;
     }
 
-    public function setOderNumber(int $oderNumber): static
+    public function setorderNumber(int $orderNumber): static
     {
-        $this->oderNumber = $oderNumber;
+        $this->orderNumber = $orderNumber;
 
         return $this;
     }
@@ -83,14 +93,14 @@ class Order
         return $this;
     }
 
-    public function getTotalAmmount(): ?int
+    public function getTotalAmount(): ?int
     {
-        return $this->totalAmmount;
+        return $this->totalAmount;
     }
 
-    public function setTotalAmmount(int $totalAmmount): static
+    public function setTotalAmount(int $totalAmount): static
     {
-        $this->totalAmmount = $totalAmmount;
+        $this->totalAmount = $totalAmount;
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Customer;
 use App\Entity\Order;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -14,6 +15,20 @@ class OrderRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Order::class);
+    }
+
+    /**
+     * @param int $customerId
+     * @return Order[]
+     */
+    public function findOrdersByCustomerId(int $customerId): array
+    {
+        return $this->createQueryBuilder('o')
+            ->join('o.customer', 'c')
+            ->where('c.id = :customerId')
+            ->setParameter('customerId', $customerId)
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**

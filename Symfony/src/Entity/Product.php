@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -15,23 +17,26 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups('products_list')]
+    #[Groups('products:read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['orders_list', 'products_list'])]
+    #[Assert\NotBlank(message: "Le nom doit être renseigné.")]
+    #[Groups(['orders:read', 'products:read', 'products:create', 'products:put'])]
     private ?string $name = null;
 
     #[ORM\Column]
-    #[Groups(['orders_list', 'products_list'])]
+    #[Assert\Positive(message: "Le prix doit être un nombre positif.")]
+    #[Assert\NotBlank(message: "Le prix doit être renseigné.")]
+    #[Groups(['orders:read', 'products:read', 'products:create', 'products:put'])]
     private ?int $price = null;
 
     #[ORM\Column]
-    #[Groups('products_list')]
+    #[Groups(['products:read', 'products:create', 'products:put'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups('products_list')]
+    #[Groups(['products:read', 'products:create', 'products:put'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**

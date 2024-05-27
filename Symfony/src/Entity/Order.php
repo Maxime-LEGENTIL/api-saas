@@ -16,34 +16,34 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?int $id = null;
 
     #[ORM\Column]
-     #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?int $orderNumber = null;
 
     /**
      * @var Collection<int, Product>
      */
     #[ORM\ManyToMany(targetEntity: Product::class, inversedBy: 'orders', cascade: ['persist'])]
-    #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private Collection $products;
 
     #[ORM\Column]
-     #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?int $totalAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
-     #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?Customer $customer = null;
 
     #[ORM\Column]
-     #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-     #[Groups(['orders_list', 'orders_post'])]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()

@@ -12,11 +12,11 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class UserController extends AbstractController
 {
-    #[Route('/api/users', name: 'app_user_index', methods: 'GET')]
+    /*#[Route('/api/users', name: 'app_user_index', methods: 'GET')]
     public function index(UserRepository $userRepository): JsonResponse
     {
         $users = $userRepository->findAll();
 
         return $this->json($users, Response::HTTP_OK, [], ["groups" => "users_list"]);
-    }
+    }*/
 }

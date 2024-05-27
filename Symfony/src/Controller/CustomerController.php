@@ -30,12 +30,12 @@ class CustomerController extends AbstractController
     #[OA\Tag(name: 'Clients')]
     #[Route('/api/customers', name: 'app_customer_index', methods: 'GET')]
     #[OA\Response(
-        response: 201,
+        response: 200,
         description: 'Retourne la liste des clients.',
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_list']))
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers:read']))
             ]
         )
     )]
@@ -54,7 +54,7 @@ class CustomerController extends AbstractController
     {
         $customers = $customerRepository->findAll();
 
-        return $this->json($customers, Response::HTTP_OK, [], ["groups" => "customers_list"]);
+        return $this->json($customers, Response::HTTP_OK, [], ["groups" => "customers:read"]);
     }
 
     /**
@@ -72,12 +72,12 @@ class CustomerController extends AbstractController
         required: true,
         schema: new OA\Schema(type: 'integer'))]
     #[OA\Response(
-        response: 201,
+        response: 200,
         description: 'Retourne les informations du client.',
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers:post']))
             ]
         )
     )]
@@ -96,10 +96,10 @@ class CustomerController extends AbstractController
     {
         $customer = $customerRepository->find($id);
         if($customer) {
-            return $this->json($customer, Response::HTTP_OK, [], ["groups" => "customers_list"]);
+            return $this->json($customer, Response::HTTP_OK, [], ["groups" => "customers:read"]);
         }
         else {
-            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:read"]);
         }
     }
 
@@ -132,7 +132,7 @@ class CustomerController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'message', type: 'string', example: "L'entité vient d'être ajoutée."),
-                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers:post']))
             ]
         )
     )]
@@ -158,7 +158,7 @@ class CustomerController extends AbstractController
                 return $this->json([
                     'message' => 'Validation errors',
                     'errors' => $errorsString
-                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_post"]);
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:post"]);
             }
             
             $entityManager->persist($customer);
@@ -167,13 +167,13 @@ class CustomerController extends AbstractController
             return $this->json([
                 'message' => "L'entité vient d'être ajoutée.",
                 'customer' => $customer
-            ], Response::HTTP_CREATED, [], ["groups" => "customers_post"]);
+            ], Response::HTTP_CREATED, [], ["groups" => "customers:post"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_post"]);
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:post"]);
         }
     }
     // Exemple pour lire un json passé en $request->getContent() et extraire les données avec json_decode
@@ -196,7 +196,7 @@ class CustomerController extends AbstractController
     #[Route('/api/customers/{id}', name: 'app_customer_delete', methods: 'DELETE')]
     #[OA\Tag(name: 'Clients')]
     #[OA\Response(
-        response: 201,
+        response: 200,
         description: 'Le client a été supprimé.',
         content: new OA\JsonContent(
             type: 'object',
@@ -228,10 +228,10 @@ class CustomerController extends AbstractController
 
             $entityManagerInterface->remove($customer);
             $entityManagerInterface->flush();
-            return $this->json(['message' => "Le client (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["groups" => "customers:read"]);
         }
         else {
-            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:read"]);
         }
     }
 
@@ -264,13 +264,13 @@ class CustomerController extends AbstractController
         )
     )]
     #[OA\Response(
-        response: 201,
+        response: 200,
         description: 'Retourne le client modifié.',
         content: new OA\JsonContent(
             type: 'object',
             properties: [
                 new OA\Property(property: 'message', type: 'string', example: "L'entité client vient d'être mise à jour."),
-                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers_post']))
+                new OA\Property(property: 'customer', ref: new Model(type: Customer::class, groups: ['customers:post']))
             ]
         )
     )]
@@ -290,7 +290,7 @@ class CustomerController extends AbstractController
         $customer = $customerRepository->find($id);
 
         if (!$customer) {
-            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "customers_list"]);
+            return $this->json(['message' => "Le client indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "customers:read"]);
         }
 
         try {
@@ -309,7 +309,7 @@ class CustomerController extends AbstractController
                 return $this->json([
                     'message' => 'Validation errors',
                     'errors' => $errorsString
-                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:read"]);
             }
 
             // Persist the updated customer entity
@@ -318,13 +318,13 @@ class CustomerController extends AbstractController
 
             return $this->json([
                 'message' => "Le client (id ".$id.") a été mis à jour avec succès."
-            ], Response::HTTP_OK, [], ["groups" => "customers_list"]);
+            ], Response::HTTP_OK, [], ["groups" => "customers:read"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers_list"]);
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:read"]);
         }
     }
 }

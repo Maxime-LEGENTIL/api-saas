@@ -18,45 +18,47 @@ class Customer
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Assert\NotBlank(message: "Le nom doit être renseigné.")]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Assert\NotBlank(message: "Le prénom doit être renseigné.")]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 320)]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
-    #[Assert\Email(
-        message: 'L\'adresse email {{ value }} est invalide.',
-    )]
+    #[Assert\Email(message: 'L\'adresse email {{ value }} est invalide.',)]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::BIGINT)]
-    #[Assert\Positive] // Nombres positifs
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Assert\Positive(message: "Le numéro de téléphone doit être un nombre positif.")]
+    #[Assert\NotBlank(message: "Le numéro de téléphone doit être renseigné.")]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $phonenumber = null;
 
     #[ORM\Column(length: 320)]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Assert\NotBlank(message: "L'adresse doit être renseignée.")]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $address = null;
 
     #[ORM\Column]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, Order>
      */
-    #[Groups(['customers_list', 'customers_post', 'orders_post'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
 

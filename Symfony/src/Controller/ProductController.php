@@ -20,30 +20,130 @@ use OpenApi\Attributes as OA;
 
 class ProductController extends AbstractController
 {
+    
+    /**
+     * Récupère la liste des produits.
+     *
+     * Récupère la liste de tous les produits de la BDD.
+     *
+     */
     #[Route('/api/products', name: 'app_product_index', methods: 'GET')]
     #[OA\Tag(name: 'Produits')]
+    #[OA\Response(
+        response: 200,
+        description: 'Retourne la liste des produits.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'product', ref: new Model(type: Product::class, groups: ['products:read']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function index(ProductRepository $productRepository): JsonResponse
     {
         $products = $productRepository->findAll();
 
-        return $this->json($products, Response::HTTP_OK, [], ["groups" => "products_list"]);
+        return $this->json($products, Response::HTTP_OK, [], ["groups" => "products:read"]);
     }
 
+    /**
+     * Récupère les informations d'un seul produit.
+     *
+     * Récupère les informations d'un produit en fonction de son ID en BDD.
+     *
+     */
     #[Route('/api/products/{id}', name: 'app_product_show', methods: 'GET')]
     #[OA\Tag(name: 'Produits')]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'L\'id du produit à récupérer.',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer'))]
+    #[OA\Response(
+        response: 200,
+        description: 'Retourne les informations du produit.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'customer', ref: new Model(type: Product::class, groups: ['products:read']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function show(int $id, ProductRepository $productRepository): JsonResponse
     {
         $product = $productRepository->find($id);
         if($product) {
-            return $this->json($product, Response::HTTP_OK, [], ["groups" => "products_list"]);
+            return $this->json($product, Response::HTTP_OK, [], ["groups" => "products:read"]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_list"]);
+            return $this->json(['success' => false, 'message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:read"]);
         }
     }
 
+    /**
+     * Ajoute un nouveau produit.
+     *
+     * Ajoute un nouveau produit en BDD.
+     *
+     */
     #[Route('/api/products', name: 'app_product_post', methods: ['POST'])]
     #[OA\Tag(name: 'Produits')]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            required: ['name', 'price'],
+            properties: [
+                new OA\Property(property: 'name', type: 'string', example: 'Paravent'),
+                new OA\Property(property: 'price', type: 'string', example: '50')
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'Retourne le produit ajouté.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: "L'entité vient d'être ajoutée."),
+                new OA\Property(property: 'customer', ref: new Model(type: Product::class, groups: ['products:create']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
     {
         try {
@@ -58,7 +158,7 @@ class ProductController extends AbstractController
                     'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
-                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_post"]);
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:create"]);
             }
             
             $entityManager->persist($product);
@@ -67,17 +167,23 @@ class ProductController extends AbstractController
             return $this->json([
                 'success' => true,
                 'message' => "L'entité vient d'être ajoutée."
-            ], Response::HTTP_CREATED, [], ["groups" => "products_post"]);
+            ], Response::HTTP_CREATED, [], ["groups" => "products:create"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_post"]);
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:create"]);
         }
     }           
 
+    /**
+     * Supprime un produit.
+     *
+     * Supprime un produit en fonction de son ID en BDD.
+     *
+     */
     #[Route('/api/products/{id}', name: 'app_product_delete', methods: 'DELETE')]
     #[OA\Tag(name: 'Produits')]
     public function delete(int $id, ProductRepository $productRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
@@ -92,21 +198,66 @@ class ProductController extends AbstractController
 
             $entityManagerInterface->remove($product);
             $entityManagerInterface->flush();
-            return $this->json(['success' => true, 'message' => "Le produit (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["groups" => "products_list"]);
+            return $this->json(['message' => "Le produit (id ".$id.") vient d'être supprimé avec succès."], Response::HTTP_OK, [], ["" => ""]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_list"]);
+            return $this->json(['message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["" => ""]);
         }
     }
 
+    /**
+     * Modifie un client.
+     *
+     * Modifie un client en BDD.
+     *
+     */
     #[Route('/api/products/{id}', name: 'app_product_put', methods: 'PUT')]
     #[OA\Tag(name: 'Produits')]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'L\'id du produit à mettre à jour.',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer'))]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            required: ['name', 'price'],
+            properties: [
+                new OA\Property(property: 'name', type: 'string', example: 'Paravent'),
+                new OA\Property(property: 'price', type: 'integer', example: '50')
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Retourne le produit modifié.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: "L'entité produit vient d'être mise à jour."),
+                new OA\Property(property: 'product', ref: new Model(type: Product::class, groups: ['products:put']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
     public function put(int $id, Request $request, ProductRepository $productRepository, SerializerInterface $serializer, ValidatorInterface $validator, EntityManagerInterface $entityManager): JsonResponse
     {
         $product = $productRepository->find($id);
 
         if (!$product) {
-            return $this->json(['success' => false, 'message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "products_list"]);
+            return $this->json(['message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => "products:put"]);
         }
 
         try {
@@ -126,7 +277,7 @@ class ProductController extends AbstractController
                     'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
-                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_list"]);
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:put"]);
             }
 
             // Persist the updated product entity
@@ -136,14 +287,14 @@ class ProductController extends AbstractController
             return $this->json([
                 'success' => true,
                 'message' => "Le produit (id ".$id.") a été mis à jour avec succès."
-            ], Response::HTTP_OK, [], ["groups" => "products_list"]);
+            ], Response::HTTP_OK, [], ["groups" => "products:put"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products_list"]);
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:put"]);
         }
     }
 }

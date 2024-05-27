@@ -7,6 +7,7 @@ API pour un SaaS/CRM de gestion de client et de suivi de commandes.
 - PHP 8.1 ou +
 - Composer
 - MySQL ou autre SGBDR
+- Symfony CLI (recommandé)
 
 ## Configuration
 
@@ -41,7 +42,7 @@ API pour un SaaS/CRM de gestion de client et de suivi de commandes.
 
 1. **Dépendances**
 
-    Afin d'installer les dépendances liées au projet, veuillez exécuter la commande suivante afin que le dossier vendor soit présent à la racine du projet :
+    Afin d'installer les dépendances liées au projet, veuillez exécuter la commande suivante afin que le dossier `vendor` soit présent à la racine du projet :
 
     ```
     composer install
@@ -69,6 +70,13 @@ API pour un SaaS/CRM de gestion de client et de suivi de commandes.
 
     ```
     php bin/console doctrine:fixtures:load OU php bin/console do:fi:lo
+    ```
+
+5. Démarrage du projet
+
+    Pour lancer le serveur, veuillez utiliser la commande suivante :
+    ```
+    symfony server:start
     ```
 
 ## Réalisation

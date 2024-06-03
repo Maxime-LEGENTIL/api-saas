@@ -77,7 +77,7 @@ class ProductController extends AbstractController
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'customer', ref: new Model(type: Product::class, groups: ['products:read']))
+                new OA\Property(property: 'product', ref: new Model(type: Product::class, groups: ['products:read']))
             ]
         )
     )]
@@ -99,7 +99,7 @@ class ProductController extends AbstractController
             return $this->json($product, Response::HTTP_OK, [], ["groups" => "products:read"]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:read"]);
+            return $this->json(['message' => "Le produit indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:read"]);
         }
     }
 
@@ -129,7 +129,7 @@ class ProductController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'message', type: 'string', example: "L'entité vient d'être ajoutée."),
-                new OA\Property(property: 'customer', ref: new Model(type: Product::class, groups: ['products:create']))
+                new OA\Property(property: 'product', ref: new Model(type: Product::class, groups: ['products:create']))
             ]
         )
     )]
@@ -155,7 +155,6 @@ class ProductController extends AbstractController
             if (count($errors) > 0) {
                 $errorsString = (string) $errors;
                 return $this->json([
-                    'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:create"]);
@@ -165,13 +164,12 @@ class ProductController extends AbstractController
             $entityManager->flush();
             
             return $this->json([
-                'success' => true,
-                'message' => "L'entité vient d'être ajoutée."
+                'message' => "L'entité vient d'être ajoutée.",
+                'product' => $product
             ], Response::HTTP_CREATED, [], ["groups" => "products:create"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:create"]);
@@ -274,7 +272,6 @@ class ProductController extends AbstractController
             if (count($errors) > 0) {
                 $errorsString = (string) $errors;
                 return $this->json([
-                    'success' => false,
                     'message' => 'Validation errors',
                     'errors' => $errorsString
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:put"]);
@@ -285,13 +282,12 @@ class ProductController extends AbstractController
             $entityManager->flush();
 
             return $this->json([
-                'success' => true,
-                'message' => "Le produit (id ".$id.") a été mis à jour avec succès."
+                'message' => "Le produit (id ".$id.") a été mis à jour avec succès.",
+                'product' => $product
             ], Response::HTTP_OK, [], ["groups" => "products:put"]);
             
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:put"]);

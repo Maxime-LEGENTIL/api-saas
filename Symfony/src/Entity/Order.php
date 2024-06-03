@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 namespace App\Entity;
 
 use App\Repository\OrderRepository;
@@ -8,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -23,19 +23,13 @@ class Order
     #[Groups(['orders:read', 'orders:create'])]
     private ?int $orderNumber = null;
 
-    /**
-     * @var Collection<int, Product>
-     */
-    #[ORM\ManyToMany(targetEntity: Product::class, inversedBy: 'orders', cascade: ['persist'])]
-    #[Groups(['orders:read', 'orders:create'])]
-    private Collection $products;
-
     #[ORM\Column]
     #[Groups(['orders:read', 'orders:create'])]
     private ?int $totalAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
     #[Groups(['orders:read', 'orders:create'])]
+    #[MaxDepth(1)]
     private ?Customer $customer = null;
 
     #[ORM\Column]
@@ -46,10 +40,17 @@ class Order
     #[Groups(['orders:read', 'orders:create'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /**
+     * @var Collection<int, OrderProduct>
+     */
+    #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'order', cascade: ['persist'])]
+    #[Groups(['orders:read', 'orders:create'])]
+    private Collection $orderProducts;
+
     public function __construct()
     {
-        $this->setCreatedAt(new DateTimeImmutable());
-        $this->products = new ArrayCollection();
+        $this->createdAt = new DateTimeImmutable();
+        $this->orderProducts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -57,38 +58,14 @@ class Order
         return $this->id;
     }
 
-    public function getorderNumber(): ?int
+    public function getOrderNumber(): ?int
     {
         return $this->orderNumber;
     }
 
-    public function setorderNumber(int $orderNumber): static
+    public function setOrderNumber(int $orderNumber): static
     {
         $this->orderNumber = $orderNumber;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Product>
-     */
-    public function getProducts(): Collection
-    {
-        return $this->products;
-    }
-
-    public function addProduct(Product $product): static
-    {
-        if (!$this->products->contains($product)) {
-            $this->products->add($product);
-        }
-
-        return $this;
-    }
-
-    public function removeProduct(Product $product): static
-    {
-        $this->products->removeElement($product);
 
         return $this;
     }
@@ -137,6 +114,36 @@ class Order
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderProduct>
+     */
+    public function getOrderProducts(): Collection
+    {
+        return $this->orderProducts;
+    }
+
+    public function addOrderProduct(OrderProduct $orderProduct): static
+    {
+        if (!$this->orderProducts->contains($orderProduct)) {
+            $this->orderProducts->add($orderProduct);
+            $orderProduct->setOrderReservedword($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderProduct(OrderProduct $orderProduct): static
+    {
+        if ($this->orderProducts->removeElement($orderProduct)) {
+            // set the owning side to null (unless already changed)
+            if ($orderProduct->getOrderReservedword() === $this) {
+                $orderProduct->setOrderReservedword(null);
+            }
+        }
 
         return $this;
     }

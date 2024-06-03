@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Order;
+use App\Entity\OrderProduct;
 use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
+use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -162,24 +164,20 @@ class OrderController extends AbstractController
             ]
         )
     )]
-    public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator, CustomerRepository $customerRepository): JsonResponse
+    public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator, CustomerRepository $customerRepository, ProductRepository $productRepository): JsonResponse
     {
         try {
             // Désérialiser la commande
-            $order = $serializer->deserialize($request->getContent(), Order::class, 'json');
-            
-            // Valider l'entité
-            $errors = $validator->validate($order);
-            if (count($errors) > 0) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Validation errors',
-                    'errors' => (string) $errors
-                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
-            }
-            
-            // Récupérer le client existant à partir du JSON
             $data = json_decode($request->getContent(), true);
+
+            //dd($data);
+
+            // Créer une nouvelle instance de commande et définir les propriétés
+            $order = new Order();
+            $order->setOrderNumber($data['orderNumber']);
+            $order->setTotalAmount($data['totalAmount']);
+
+            // Récupérer le client existant à partir du JSON
             $customerId = $data['customer']['id'] ?? null;
             if (!$customerId) {
                 return $this->json([
@@ -196,18 +194,55 @@ class OrderController extends AbstractController
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
             }
 
-            // Associer le client à la commande
             $order->setCustomer($customer);
-            
+
+            /// Associer les produits existants à la commande avec leur quantité
+            //dd($data['products']);
+            foreach ($data['products'] as $productData) {
+                $productId = $productData['id'] ?? null;
+                $quantity = $productData['quantity']; // Par défaut, la quantité est 1
+
+                if (!$productId) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Product ID is required'
+                    ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+                }
+
+                $product = $productRepository->find($productId);
+                if (!$product) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Product not found'
+                    ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+                }
+
+                $orderProduct = new OrderProduct();
+                $orderProduct->setProduct($product);
+                $orderProduct->setQuantity($quantity);
+                $order->addOrderProduct($orderProduct);
+            }
+
+            // Valider l'entité
+            $errors = $validator->validate($order);
+            if (count($errors) > 0) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => (string) $errors
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+            }
+
             // Persister la commande
             $entityManager->persist($order);
             $entityManager->flush();
-            
+
             return $this->json([
                 'success' => true,
-                'message' => "L'entité vient d'être ajoutée."
+                'message' => "L'entité vient d'être ajoutée.",
+                'order' => $order
             ], Response::HTTP_CREATED, [], ["groups" => "orders:create"]);
-            
+
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'success' => false,
@@ -216,6 +251,7 @@ class OrderController extends AbstractController
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
         }
     }
+
 
     /**
      * Supprime une commande.

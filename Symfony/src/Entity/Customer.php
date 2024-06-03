@@ -10,6 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
@@ -58,7 +59,7 @@ class Customer
     /**
      * @var Collection<int, Order>
      */
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post'])]
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
 

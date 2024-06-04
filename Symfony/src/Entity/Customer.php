@@ -19,22 +19,22 @@ class Customer
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le nom doit être renseigné.")]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le prénom doit être renseigné.")]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 320)]
     #[Assert\Email(message: 'L\'adresse email {{ value }} est invalide.',)]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::BIGINT)]

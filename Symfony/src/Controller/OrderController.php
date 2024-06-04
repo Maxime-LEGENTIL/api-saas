@@ -170,12 +170,13 @@ class OrderController extends AbstractController
             // Désérialiser la commande
             $data = json_decode($request->getContent(), true);
 
-            //dd($data);
+            //dd($data['name']);
 
             // Créer une nouvelle instance de commande et définir les propriétés
             $order = new Order();
             $order->setOrderNumber($data['orderNumber']);
             $order->setTotalAmount($data['totalAmount']);
+            $order->setName($data['name']);
 
             // Récupérer le client existant à partir du JSON
             $customerId = $data['customer']['id'] ?? null;

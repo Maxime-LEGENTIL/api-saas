@@ -34,6 +34,10 @@ class Order
 
     #[ORM\Column]
     #[Groups(['orders:read', 'orders:create'])]
+    private ?string $name = null;
+
+    #[ORM\Column]
+    #[Groups(['orders:read', 'orders:create'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
@@ -90,6 +94,18 @@ class Order
     public function setCustomer(?Customer $customer): static
     {
         $this->customer = $customer;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
 
         return $this;
     }

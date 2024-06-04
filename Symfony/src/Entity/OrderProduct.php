@@ -25,6 +25,7 @@ class OrderProduct
     private ?Product $product = null;
 
     #[ORM\ManyToOne(inversedBy: 'orderProducts')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['order_products:read'])]
     private ?Order $order = null;
 
@@ -70,12 +71,12 @@ class OrderProduct
         return $this;
     }
 
-    public function getOrderReservedword(): ?Order
+    public function getOrder(): ?Order
     {
         return $this->order;
     }
 
-    public function setOrderReservedword(?Order $order): static
+    public function setOrder(?Order $order): static
     {
         $this->order = $order;
 

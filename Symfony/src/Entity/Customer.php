@@ -37,8 +37,8 @@ class Customer
     #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $email = null;
 
-    #[ORM\Column(type: Types::BIGINT)]
-    #[Assert\Positive(message: "Le numéro de téléphone doit être un nombre positif.")]
+    #[ORM\Column(length: 50)]
+    ##[Assert\Positive(message: "Le numéro de téléphone doit être un nombre positif.")]
     #[Assert\NotBlank(message: "Le numéro de téléphone doit être renseigné.")]
     #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?string $phonenumber = null;

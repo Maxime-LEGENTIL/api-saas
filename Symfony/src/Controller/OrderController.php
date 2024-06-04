@@ -24,6 +24,42 @@ use OpenApi\Attributes as OA;
 class OrderController extends AbstractController
 {
     /**
+     * Récupère la dernière commande.
+     *
+     * Récupère la dernière commande de la BDD.
+     *
+     */
+    #[Route('/api/orders/last', name: 'app_order_last', methods: 'GET')]
+    #[OA\Tag(name: 'Commandes')]
+    #[OA\Response(
+        response: 200,
+        description: 'Retourne la dernière commande.',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'order', ref: new Model(type: Order::class, groups: ['orders:read']))
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Invalid input',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Validation errors'),
+                new OA\Property(property: 'errors', type: 'string', example: 'Error details here')
+            ]
+        )
+    )]
+    public function last(OrderRepository $orderRepository): JsonResponse
+    {
+        $orders = $orderRepository->findLatestOrder();
+
+        return $this->json($orders, Response::HTTP_OK, [], ["groups" => "orders:read"]);
+    }
+
+    /**
      * Récupère la liste des commandes.
      *
      * Récupère la liste de tous les commandes de la BDD.
@@ -101,7 +137,7 @@ class OrderController extends AbstractController
             return $this->json($order, Response::HTTP_OK, [], ["groups" => "orders:read"]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "Le commande indiquée (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:read"]);
+            return $this->json(['message' => "Le commande indiquée (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:read"]);
         }
     }
 
@@ -182,7 +218,6 @@ class OrderController extends AbstractController
             $customerId = $data['customer']['id'] ?? null;
             if (!$customerId) {
                 return $this->json([
-                    'success' => false,
                     'message' => 'Customer ID is required'
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
             }
@@ -190,7 +225,6 @@ class OrderController extends AbstractController
             $customer = $customerRepository->find($customerId);
             if (!$customer) {
                 return $this->json([
-                    'success' => false,
                     'message' => 'Customer not found'
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
             }
@@ -205,7 +239,6 @@ class OrderController extends AbstractController
 
                 if (!$productId) {
                     return $this->json([
-                        'success' => false,
                         'message' => 'Product ID is required'
                     ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
                 }
@@ -213,7 +246,6 @@ class OrderController extends AbstractController
                 $product = $productRepository->find($productId);
                 if (!$product) {
                     return $this->json([
-                        'success' => false,
                         'message' => 'Product not found'
                     ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
                 }
@@ -228,7 +260,6 @@ class OrderController extends AbstractController
             $errors = $validator->validate($order);
             if (count($errors) > 0) {
                 return $this->json([
-                    'success' => false,
                     'message' => 'Validation errors',
                     'errors' => (string) $errors
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
@@ -239,14 +270,12 @@ class OrderController extends AbstractController
             $entityManager->flush();
 
             return $this->json([
-                'success' => true,
                 'message' => "L'entité vient d'être ajoutée.",
                 'order' => $order
             ], Response::HTTP_CREATED, [], ["groups" => "orders:create"]);
 
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
@@ -285,14 +314,23 @@ class OrderController extends AbstractController
     )]
     public function delete(int $id, Request $request, OrderRepository $orderRepository, SerializerInterface $serializer, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
-        $oder = $orderRepository->find($id);
-        if($oder) {
-            $entityManagerInterface->remove($oder);
+        $order = $orderRepository->find($id);
+        if($order) {
+            $products = $order->getOrderProducts();
+
+            for ($i=0; $i < count($products); $i++) { 
+                $orderProduct = $products[$i];
+                $order->removeOrderProduct($orderProduct);
+                //dump($products[$i]);
+            }
+            //dd($products);
+
+            $entityManagerInterface->remove($order);
             $entityManagerInterface->flush();
-            return $this->json(['success' => true, 'message' => "La commande (id ".$id.") d'être supprimé avec succès."], Response::HTTP_OK, [], ["" => ""]);
+            return $this->json(['message' => "La commande (id ".$id.") d'être supprimé avec succès."], Response::HTTP_OK, [], ["" => ""]);
         }
         else {
-            return $this->json(['success' => false, 'message' => "La commande indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["" => ""]);
+            return $this->json(['message' => "La commande indiqué (id ".$id.") n'existe pas."], Response::HTTP_BAD_REQUEST, [], ["" => ""]);
         }
     }
 
@@ -357,49 +395,114 @@ class OrderController extends AbstractController
             ]
         )
     )]
-    public function put(int $id, Request $request, OrderRepository $orderRepository, SerializerInterface $serializer, ValidatorInterface $validator, EntityManagerInterface $entityManager): JsonResponse
-    {
+    public function put(
+        int $id,
+        Request $request,
+        OrderRepository $orderRepository,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager,
+        ProductRepository $productRepository,
+        CustomerRepository $customerRepository
+    ): JsonResponse {
         $order = $orderRepository->find($id);
-
+    
         if (!$order) {
-            return $this->json(['success' => false, 'message' => "La commande indiquée (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["" => ""]);
+            return $this->json(['message' => "La commande indiquée (id ".$id.") n'existe pas."], Response::HTTP_NOT_FOUND, [], ["groups" => ""]);
         }
-
+    
         try {
-            // Désérialiser les nouvelles données en utilisant les données existantes du client
-            $updatedOrder = $serializer->deserialize(
-                $request->getContent(),
-                Order::class,
-                'json',
-                ['object_to_populate' => $order]
-            );
-
-            // Valider l'entité mise à jour
-            $errors = $validator->validate($updatedOrder);
-            if (count($errors) > 0) {
-                $errorsString = (string) $errors;
+            $data = json_decode($request->getContent(), true);
+    
+            // Mettre à jour les propriétés de la commande
+            $order->setOrderNumber($data['orderNumber']);
+            $order->setTotalAmount($data['totalAmount']);
+            $order->setName($data['name']);
+    
+            // Récupérer le client existant à partir du JSON
+            $customerId = $data['customer']['id'] ?? null;
+            if (!$customerId) {
                 return $this->json([
-                    'success' => false,
+                    'message' => 'Customer ID is required'
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+            }
+    
+            $customer = $customerRepository->find($customerId);
+            if (!$customer) {
+                return $this->json([
+                    'message' => 'Customer not found'
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+            }
+    
+            $order->setCustomer($customer);
+    
+            // Mettre à jour les produits associés
+            $existingOrderProducts = $order->getOrderProducts();
+            $newProductIds = array_map(fn($productData) => $productData['id'], $data['products']);
+    
+            // Supprimer les produits qui ne sont pas dans la nouvelle liste
+            foreach ($existingOrderProducts as $existingOrderProduct) {
+                if (!in_array($existingOrderProduct->getProduct()->getId(), $newProductIds)) {
+                    $order->removeOrderProduct($existingOrderProduct);
+                    $entityManager->remove($existingOrderProduct);
+                }
+            }
+    
+            // Ajouter ou mettre à jour les produits dans la commande
+            foreach ($data['products'] as $productData) {
+                $productId = $productData['id'] ?? null;
+                $quantity = $productData['quantity'] ?? 1;
+    
+                if (!$productId) {
+                    return $this->json([
+                        'message' => 'Product ID is required'
+                    ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+                }
+    
+                $product = $productRepository->find($productId);
+                if (!$product) {
+                    return $this->json([
+                        'message' => 'Product not found'
+                    ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:create"]);
+                }
+    
+                $orderProduct = $existingOrderProducts->filter(
+                    fn($op) => $op->getProduct()->getId() === $productId
+                )->first();
+    
+                if (!$orderProduct) {
+                    $orderProduct = new OrderProduct();
+                    $orderProduct->setProduct($product);
+                    $orderProduct->setOrder($order);
+                    $order->addOrderProduct($orderProduct);
+                }
+    
+                $orderProduct->setQuantity($quantity);
+            }
+    
+            // Valider l'entité mise à jour
+            $errors = $validator->validate($order);
+            if (count($errors) > 0) {
+                return $this->json([
                     'message' => 'Validation errors',
-                    'errors' => $errorsString
+                    'errors' => (string) $errors
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "orders:read"]);
             }
-
-            // Persist the updated customer entity
-            $entityManager->persist($updatedOrder);
+    
+            // Persister les changements
+            $entityManager->persist($order);
             $entityManager->flush();
-
+    
             return $this->json([
-                'success' => true,
-                'message' => "La commande (id ".$id.") a été mise à jour avec succès."
+                'message' => "La commande (id ".$id.") a été mise à jour avec succès.",
+                'order' => $order
             ], Response::HTTP_OK, [], ["groups" => "orders:read"]);
-            
+    
         } catch (NotEncodableValueException $e) {
             return $this->json([
-                'success' => false,
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST, [], ["" => ""]);
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => ""]);
         }
-    }
+    }    
 }

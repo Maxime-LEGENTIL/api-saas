@@ -40,12 +40,12 @@ class Customer
     #[ORM\Column(length: 50)]
     ##[Assert\Positive(message: "Le numéro de téléphone doit être un nombre positif.")]
     #[Assert\NotBlank(message: "Le numéro de téléphone doit être renseigné.")]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $phonenumber = null;
 
     #[ORM\Column(length: 320)]
     #[Assert\NotBlank(message: "L'adresse doit être renseignée.")]
-    #[Groups(['customers:read', 'customers:post', 'orders:create'])]
+    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $address = null;
 
     #[ORM\Column]

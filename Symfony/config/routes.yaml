@@ -4,5 +4,6 @@ controllers:
         namespace: App\Controller
     type: attribute
 
+# API JWT
 api_login_check:
     path: /api/login_check

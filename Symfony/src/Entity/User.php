@@ -52,6 +52,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('users_list')]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(length: 50)]
+    private ?string $phonenumber = null;
+
+    #[ORM\Column(length: 50)]
+    private ?string $society = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -171,6 +177,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getPhonenumber(): ?string
+    {
+        return $this->phonenumber;
+    }
+
+    public function setPhonenumber(string $phonenumber): static
+    {
+        $this->phonenumber = $phonenumber;
+
+        return $this;
+    }
+
+    public function getSociety(): ?string
+    {
+        return $this->society;
+    }
+
+    public function setSociety(string $society): static
+    {
+        $this->society = $society;
 
         return $this;
     }

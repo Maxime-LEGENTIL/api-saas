@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Address;
 use App\Entity\Customer;
 use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
@@ -151,6 +152,13 @@ class CustomerController extends AbstractController
     {
         try {
             $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
+            $json_to_array = json_decode($request->getContent());
+            $country = $json_to_array->country;
+            $city = $json_to_array->city;
+            $zipcode = $json_to_array->zipcode;
+
+            //dd(json_decode($request->getContent()), json_decode($request->getContent())->firstname);
+            //dd($request->getContent());
             
             $errors = $validator->validate($customer);
             if (count($errors) > 0) {
@@ -162,6 +170,15 @@ class CustomerController extends AbstractController
             }
             
             $entityManager->persist($customer);
+            $entityManager->flush();
+
+            $address = new Address();
+            $address->setCountry($country);
+            $address->setCity($city);
+            $address->setZipcode($zipcode);
+            $address->setCustomer($customer);
+
+            $entityManager->persist($address);
             $entityManager->flush();
             
             return $this->json([

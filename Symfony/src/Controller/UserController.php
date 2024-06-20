@@ -50,6 +50,7 @@ class UserController extends AbstractController
                     // Vous pouvez ajouter plus d'informations ici
                     $entityManager->persist($user);
                     $entityManager->flush();
+                    // TODO HERE
                 }
 
                 // Générez un JWT pour l'utilisateur

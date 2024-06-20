@@ -43,11 +43,6 @@ class Customer
     #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $phonenumber = null;
 
-    #[ORM\Column(length: 320)]
-    #[Assert\NotBlank(message: "L'adresse doit être renseignée.")]
-    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
-    private ?string $address = null;
-
     #[ORM\Column]
     #[Groups(['customers:read', 'customers:post', 'orders:create'])]
     private ?\DateTimeImmutable $createdAt = null;
@@ -62,6 +57,10 @@ class Customer
     #[Groups(['customers:read', 'customers:post'])]
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
+
+    #[ORM\OneToOne(mappedBy: 'customer', cascade: ['persist', 'remove'])]
+    #[Groups(['customers:post'])]
+    private ?Address $address = null;
 
     public function __construct()
     {
@@ -122,18 +121,6 @@ class Customer
         return $this;
     }
 
-    public function getAddress(): ?string
-    {
-        return $this->address;
-    }
-
-    public function setAddress(string $address): static
-    {
-        $this->address = $address;
-
-        return $this;
-    }
-
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -184,6 +171,28 @@ class Customer
                 $order->setCustomer(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getAddress(): ?Address
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?Address $address): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($address === null && $this->address !== null) {
+            $this->address->setCustomer(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($address !== null && $address->getCustomer() !== $this) {
+            $address->setCustomer($this);
+        }
+
+        $this->address = $address;
 
         return $this;
     }

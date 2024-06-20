@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Address;
 use App\Entity\Customer;
 use App\Entity\Order;
 use App\Entity\Product;
@@ -14,12 +15,14 @@ class AppFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        // Admin
+        // Utilisateur
         $user = new User();
-        $user->setEmail('admin@admin.com');
+        $user->setEmail('maxime.legentil17@gmail.com');
         $user->setPassword('$2y$10$PYNxB4I2/0LfIwBMg9EBaeVTHY/00IrH.LxkVbWnmITqBnXawEIQm'); // admin
         $user->setFirstname('Maxime');
         $user->setLastname('LE GENTIL');
+        $user->setPhonenumber('069863523');
+        $user->setSociety('Hiboo CRM');
         $user->setCreatedAt(new DateTimeImmutable());
         $manager->persist($user);
         $manager->flush();
@@ -135,18 +138,49 @@ class AppFixtures extends Fixture
         ];
         $customers = [];
 
+        $address_data = [
+            "country" => "France",
+            "city" => "Marseille",
+            "zipcode" => "13001"
+        ];
+
         foreach ($customers_data as $customer_data) {
             $customer = new Customer();
             $customer->setFirstname($customer_data['firstname']);
             $customer->setLastname($customer_data['lastname']);
             $customer->setEmail($customer_data['email']);
             $customer->setPhonenumber($customer_data['phonenumber']);
-            $customer->setAddress($customer_data['address']);
+            //$customer->setAddress($customer_data['address']);
             $customer->setCreatedAt(new DateTimeImmutable());
             $manager->persist($customer);
+            $manager->flush();
+            
+
+            // Addresse :
+            $address = new Address();
+            $address->setCountry($address_data["country"]);
+            $address->setCity($address_data["city"]);
+            $address->setZipcode($address_data["zipcode"]);
+            $address->setCustomer($customer);
+
+            $manager->persist($address);
+            $manager->flush();
+
             $customers[] = $customer;
         }
-        $manager->flush();
+
+
+        /*$address = new Address();
+        $address->setCountry($address_data["country"]);
+        $address->setCity($address_data["city"]);
+        $address->setZipcode($address_data["zipcode"]);
+
+        foreach ($customers as $key => $value) {
+            $address->setCustomer($value);
+            $manager->persist($address);
+            $manager->flush();
+        }*/
+
 
         // Products
         $products_data = [

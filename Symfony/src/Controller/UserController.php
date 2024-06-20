@@ -9,10 +9,48 @@ use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use Symfony\Component\Serializer\SerializerInterface as SerializerSerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserController extends AbstractController
 {
+    #[Route('/users/create', name: 'app_user_create', methods: 'POST')]
+    public function create(Request $request, EntityManagerInterface $entityManager, SerializerSerializerInterface $serializerInterface, ValidatorInterface $validator)
+    {
+        try {
+            $user = $serializerInterface->deserialize($request->getContent(), User::class, 'json');
+            //dd($user);
+            
+            $errors = $validator->validate($user);
+            if (count($errors) > 0) {
+                $errorsString = (string) $errors;
+                return $this->json([
+                    'message' => 'Validation errors',
+                    'errors' => $errorsString
+                ], Response::HTTP_BAD_REQUEST, [], ["groups" => "users:create"]);
+            }
+            
+            $entityManager->persist($user);
+            $entityManager->flush();
+            
+            return $this->json([
+                'message' => "L'entité vient d'être ajoutée.",
+                'user' => $user
+            ], Response::HTTP_CREATED, [], ["groups" => "users:create"]);
+            
+        } catch (NotEncodableValueException $e) {
+            return $this->json([
+                'message' => "Invalid JSON",
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST, [], ["groups" => "products:create"]);
+        }
+    }
+
+
     #[Route('/connect/google/check', name: 'connect_google_check', methods: 'POST')]
     public function connectCheckAction(Request $request, EntityManagerInterface $entityManager, JWTTokenManagerInterface $JWTManager)
     {
@@ -40,17 +78,7 @@ class UserController extends AbstractController
                 $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
                 if (!$user) {
-                    // Optionnel : Créez un nouvel utilisateur si non existant
-                    $user = new User();
-                    $user->setEmail($email);
-                    $user->setFirstname($firstname);
-                    $user->setLastname($lastname);
-                    $user->setPassword('Google account');
-                    $user->setCreatedAt(new DateTimeImmutable());
-                    // Vous pouvez ajouter plus d'informations ici
-                    $entityManager->persist($user);
-                    $entityManager->flush();
-                    // TODO HERE
+                    return new JsonResponse(['error' => 'Email inconnue'], 400);
                 }
 
                 // Générez un JWT pour l'utilisateur

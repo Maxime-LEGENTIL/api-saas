@@ -44,6 +44,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('users_list')]
     private ?string $lastname = null;
 
+    #[ORM\Column(length: 50)]
+    private ?string $phonenumber = null;
+
+    #[ORM\Column(length: 50)]
+    private ?string $society = null;
+
     #[ORM\Column]
     #[Groups('users_list')]
     private ?\DateTimeImmutable $createdAt = null;
@@ -52,11 +58,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('users_list')]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\Column(length: 50)]
-    private ?string $phonenumber = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $society = null;
+    public function __construct() 
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {

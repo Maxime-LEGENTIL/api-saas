@@ -27,6 +27,10 @@ class Address
     #[Groups(['customers:post'])]
     private ?string $zipcode = null;
 
+    #[ORM\OneToOne(inversedBy: 'address', cascade: ['persist', 'remove'])]
+    #[Groups(['customers:post'])]
+    private ?Customer $customer = null;
+
     #[ORM\Column]
     #[Groups(['customers:post'])]
     private ?\DateTimeImmutable $createdAt = null;
@@ -35,9 +39,6 @@ class Address
     #[Groups(['customers:post'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToOne(inversedBy: 'address', cascade: ['persist', 'remove'])]
-    #[Groups(['customers:post'])]
-    private ?Customer $customer = null;
 
     public function __construct()
     {

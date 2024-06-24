@@ -62,10 +62,17 @@ class Customer
     #[Groups(['customers:post'])]
     private ?Address $address = null;
 
+    /**
+     * @var Collection<int, Email>
+     */
+    #[ORM\OneToMany(targetEntity: Email::class, mappedBy: 'customer')]
+    private Collection $emails;
+
     public function __construct()
     {
         $this->setCreatedAt(new DateTimeImmutable());
         $this->orders = new ArrayCollection();
+        $this->emails = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -193,6 +200,36 @@ class Customer
         }
 
         $this->address = $address;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Email>
+     */
+    public function getEmails(): Collection
+    {
+        return $this->emails;
+    }
+
+    public function addEmail(Email $email): static
+    {
+        if (!$this->emails->contains($email)) {
+            $this->emails->add($email);
+            $email->setCustomer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEmail(Email $email): static
+    {
+        if ($this->emails->removeElement($email)) {
+            // set the owning side to null (unless already changed)
+            if ($email->getCustomer() === $this) {
+                $email->setCustomer(null);
+            }
+        }
 
         return $this;
     }

@@ -66,10 +66,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Ticket::class, mappedBy: 'user')]
     private Collection $tickets;
 
+    /**
+     * @var Collection<int, TicketResponse>
+     */
+    #[ORM\ManyToMany(targetEntity: TicketResponse::class, mappedBy: 'user')]
+    private Collection $ticketResponses;
+
     public function __construct() 
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->tickets = new ArrayCollection();
+        $this->ticketResponses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -244,6 +251,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($ticket->getUser() === $this) {
                 $ticket->setUser(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TicketResponse>
+     */
+    public function getTicketResponses(): Collection
+    {
+        return $this->ticketResponses;
+    }
+
+    public function addTicketResponse(TicketResponse $ticketResponse): static
+    {
+        if (!$this->ticketResponses->contains($ticketResponse)) {
+            $this->ticketResponses->add($ticketResponse);
+            $ticketResponse->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTicketResponse(TicketResponse $ticketResponse): static
+    {
+        if ($this->ticketResponses->removeElement($ticketResponse)) {
+            $ticketResponse->removeUser($this);
         }
 
         return $this;

@@ -32,11 +32,6 @@ class Customer
     #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
     private ?string $lastname = null;
 
-    #[ORM\Column(length: 320)]
-    #[Assert\Email(message: 'L\'adresse email {{ value }} est invalide.',)]
-    #[Groups(['customers:read', 'customers:post', 'orders:create', 'orders:read'])]
-    private ?string $email = null;
-
     #[ORM\Column(length: 50)]
     ##[Assert\Positive(message: "Le numéro de téléphone doit être un nombre positif.")]
     #[Assert\NotBlank(message: "Le numéro de téléphone doit être renseigné.")]
@@ -58,21 +53,24 @@ class Customer
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]
     private Collection $orders;
 
-    #[ORM\OneToOne(mappedBy: 'customer', cascade: ['persist', 'remove'])]
-    #[Groups(['customers:post'])]
-    private ?Address $address = null;
-
     /**
      * @var Collection<int, Email>
      */
     #[ORM\OneToMany(targetEntity: Email::class, mappedBy: 'customer')]
     private Collection $emails;
 
+    /**
+     * @var Collection<int, Address>
+     */
+    #[ORM\ManyToMany(targetEntity: Address::class, inversedBy: 'customers')]
+    private Collection $address;
+
     public function __construct()
     {
         $this->setCreatedAt(new DateTimeImmutable());
         $this->orders = new ArrayCollection();
         $this->emails = new ArrayCollection();
+        $this->address = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -100,18 +98,6 @@ class Customer
     public function setLastname(string $lastname): static
     {
         $this->lastname = $lastname;
-
-        return $this;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
 
         return $this;
     }
@@ -182,28 +168,6 @@ class Customer
         return $this;
     }
 
-    public function getAddress(): ?Address
-    {
-        return $this->address;
-    }
-
-    public function setAddress(?Address $address): static
-    {
-        // unset the owning side of the relation if necessary
-        if ($address === null && $this->address !== null) {
-            $this->address->setCustomer(null);
-        }
-
-        // set the owning side of the relation if necessary
-        if ($address !== null && $address->getCustomer() !== $this) {
-            $address->setCustomer($this);
-        }
-
-        $this->address = $address;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Email>
      */
@@ -230,6 +194,30 @@ class Customer
                 $email->setCustomer(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Address>
+     */
+    public function getAddress(): Collection
+    {
+        return $this->address;
+    }
+
+    public function addAddress(Address $address): static
+    {
+        if (!$this->address->contains($address)) {
+            $this->address->add($address);
+        }
+
+        return $this;
+    }
+
+    public function removeAddress(Address $address): static
+    {
+        $this->address->removeElement($address);
 
         return $this;
     }

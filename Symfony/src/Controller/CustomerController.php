@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Address;
 use App\Entity\Customer;
+use App\Entity\Email;
 use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -109,6 +110,11 @@ class CustomerController extends AbstractController
      *
      * Ajoute un nouveau client en BDD.
      *
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param EntityManagerInterface $entityManager
+     * @param ValidatorInterface $validator
+     * @return JsonResponse
      */
     #[Route('/api/customers', name: 'app_customer_post', methods: ['POST'])]
     #[OA\Tag(name: 'Clients')]
@@ -122,7 +128,16 @@ class CustomerController extends AbstractController
                 new OA\Property(property: 'lastname', type: 'string', example: 'Doe'),
                 new OA\Property(property: 'email', type: 'string', example: 'john.doe@example.com'),
                 new OA\Property(property: 'phonenumber', type: 'string', example: '1234567890'),
-                new OA\Property(property: 'address', type: 'string', example: '123 Main St')
+                new OA\Property(
+                    property: 'address',
+                    type: 'object',
+                    required: ['country', 'city', 'zipcode'],
+                    properties: [
+                        new OA\Property(property: 'country', type: 'string', example: 'France'),
+                        new OA\Property(property: 'city', type: 'string', example: 'Paris'),
+                        new OA\Property(property: 'zipcode', type: 'string', example: '75001')
+                    ]
+                )
             ]
         )
     )]
@@ -151,58 +166,71 @@ class CustomerController extends AbstractController
     public function post(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
     {
         try {
-            $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
-            $json_to_array = json_decode($request->getContent());
-            $country = $json_to_array->country;
-            $city = $json_to_array->city;
-            $zipcode = $json_to_array->zipcode;
-
-            //dd(json_decode($request->getContent()), json_decode($request->getContent())->firstname);
             //dd($request->getContent());
+            //$customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
+            $json_to_array = json_decode($request->getContent(), true);
+            //dd($json_to_array);
             
-            $errors = $validator->validate($customer);
+            // On extrait les données
+            $address = $json_to_array['address'];
+            $country = $json_to_array['country'];
+            $city = $json_to_array['city'];
+            $zipcode = $json_to_array['zipcode'];
+            $firstname = $json_to_array['firstname'];
+            $lastname = $json_to_array['lastname'];
+            $email = $json_to_array['email'];
+            $phonenumber = $json_to_array['phonenumber'];
+
+            // Customer :
+            $customer = new Customer();
+            $customer->setFirstname($firstname);
+            $customer->setLastname($lastname);
+            $customer->setPhonenumber($phonenumber);
+
+            $entityManager->persist($customer);
+            $entityManager->flush(); // Flushing here to get the ID of the customer
+
+
+            /*$errors = $validator->validate($customer);
             if (count($errors) > 0) {
                 $errorsString = (string) $errors;
                 return $this->json([
                     'message' => 'Validation errors',
                     'errors' => $errorsString
                 ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:post"]);
-            }
-            
-            $entityManager->persist($customer);
+            }*/
+
+            // Addresse :
+            $newAddress = new Address();
+            $newAddress->setCountry($country);
+            $newAddress->setCity($city);
+            $newAddress->setZipcode($zipcode);
+            $newAddress->setAddress($address);
+            $newAddress->addCustomer($customer);
+
+            $entityManager->persist($newAddress);
             $entityManager->flush();
 
-            $address = new Address();
-            $address->setCountry($country);
-            $address->setCity($city);
-            $address->setZipcode($zipcode);
-            $address->setCustomer($customer);
+            // Email :
+            $newEmail = new Email();
+            $newEmail->setEmail($email);
+            $newEmail->setCustomer($customer);
 
-            $entityManager->persist($address);
+            $entityManager->persist($newEmail);
             $entityManager->flush();
-            
+
             return $this->json([
                 'message' => "L'entité vient d'être ajoutée.",
                 'customer' => $customer
             ], Response::HTTP_CREATED, [], ["groups" => "customers:post"]);
-            
+
         } catch (NotEncodableValueException $e) {
             return $this->json([
                 'message' => "Invalid JSON",
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST, [], ["groups" => "customers:post"]);
         }
-    }
-    // Exemple pour lire un json passé en $request->getContent() et extraire les données avec json_decode
-    /*$post_data = json_decode($request->getContent(), true);
-    $firstname = $post_data['firstname'];
-    $lastname = $post_data['lastname'];
-    $email = $post_data['email'];
-    $phonenumber = $post_data['phonenumber'];
-    $address = $post_data['address'];
-    
-    dd($firstname, $lastname, $email, $email, $phonenumber, $address);*/
-                
+    }           
 
     /**
      * Supprime un client.

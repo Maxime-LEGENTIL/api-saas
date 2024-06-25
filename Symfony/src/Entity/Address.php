@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AddressRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -27,9 +29,9 @@ class Address
     #[Groups(['customers:post'])]
     private ?string $zipcode = null;
 
-    #[ORM\OneToOne(inversedBy: 'address', cascade: ['persist', 'remove'])]
+    #[ORM\Column(length: 255)]
     #[Groups(['customers:post'])]
-    private ?Customer $customer = null;
+    private ?string $address = null;
 
     #[ORM\Column]
     #[Groups(['customers:post'])]
@@ -39,10 +41,18 @@ class Address
     #[Groups(['customers:post'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /**
+     * @var Collection<int, Customer>
+     */
+    #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'address')]
+    private Collection $customers;
+
+
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->customers = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -110,14 +120,41 @@ class Address
         return $this;
     }
 
-    public function getCustomer(): ?Customer
+    public function getAddress(): ?string
     {
-        return $this->customer;
+        return $this->address;
     }
 
-    public function setCustomer(?Customer $customer): static
+    public function setAddress(string $address): static
     {
-        $this->customer = $customer;
+        $this->address = $address;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Customer>
+     */
+    public function getCustomers(): Collection
+    {
+        return $this->customers;
+    }
+
+    public function addCustomer(Customer $customer): static
+    {
+        if (!$this->customers->contains($customer)) {
+            $this->customers->add($customer);
+            $customer->addAddress($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCustomer(Customer $customer): static
+    {
+        if ($this->customers->removeElement($customer)) {
+            $customer->removeAddress($this);
+        }
 
         return $this;
     }

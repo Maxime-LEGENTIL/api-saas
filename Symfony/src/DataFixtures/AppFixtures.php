@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Address;
 use App\Entity\Customer;
+use App\Entity\Email;
 use App\Entity\Order;
 use App\Entity\Product;
 use App\Entity\User;
@@ -33,126 +34,121 @@ class AppFixtures extends Fixture
                 'firstname' => 'Fabrice',
                 'lastname' => 'LECONTE',
                 'email' => 'leconte.f@fff.fr',
-                'phonenumber' => '0606986350',
-                'address' => '5 rue du Foubourg St Honoré, 75001 PARIS'
+                'phonenumber' => '0606986350'
             ],
             [
                 'firstname' => 'Julie',
                 'lastname' => 'FOUCHÉ',
                 'email' => 'fouche.julie@gmail.com',
-                'phonenumber' => '0706986350',
-                'address' => '85 Bvd des mouettes, 69000 LYON'
+                'phonenumber' => '0706986350'
             ],
             [
                 'firstname' => 'Edward',
                 'lastname' => 'NORTON',
                 'email' => 'edd.norton@outlook.fr',
-                'phonenumber' => '0616989650',
-                'address' => '55 impasse du Foubourg St Honoré, 13002 MARSEILLE'
+                'phonenumber' => '0616989650'
             ],
             [
                 'firstname' => 'Alain',
                 'lastname' => 'DELON',
                 'email' => 'a.delon@gmail.com',
-                'phonenumber' => '0796989550',
-                'address' => '5 rue du Foubourg St Honoré, 75001 PARIS'
+                'phonenumber' => '0796989550'
             ],
             // Additional customers
             [
                 'firstname' => 'Sophie',
                 'lastname' => 'MARCEAU',
                 'email' => 's.marceau@famous.fr',
-                'phonenumber' => '0654879625',
-                'address' => '14 avenue des Champs-Élysées, 75008 PARIS'
+                'phonenumber' => '0654879625'
             ],
             [
                 'firstname' => 'Jean',
                 'lastname' => 'DUJARDIN',
                 'email' => 'jean.dujardin@mail.fr',
-                'phonenumber' => '0632145876',
-                'address' => '18 rue de Rivoli, 75004 PARIS'
+                'phonenumber' => '0632145876'
             ],
             [
                 'firstname' => 'Marion',
                 'lastname' => 'COTILLARD',
                 'email' => 'm.cotillard@yahoo.fr',
-                'phonenumber' => '0611223344',
-                'address' => '22 rue Oberkampf, 75011 PARIS'
+                'phonenumber' => '0611223344'
             ],
             [
                 'firstname' => 'Gérard',
                 'lastname' => 'DEPARDIEU',
                 'email' => 'gerard.depardieu@gmail.com',
-                'phonenumber' => '0799123456',
-                'address' => '33 boulevard Haussmann, 75009 PARIS'
+                'phonenumber' => '0799123456'
             ],
             [
                 'firstname' => 'Isabelle',
                 'lastname' => 'HUPPERT',
                 'email' => 'isabelle.huppert@cinema.fr',
-                'phonenumber' => '0709876543',
-                'address' => '44 rue de la Paix, 75002 PARIS'
+                'phonenumber' => '0709876543'
             ],
             [
                 'firstname' => 'Vincent',
                 'lastname' => 'CASSEL',
                 'email' => 'vincent.cassel@mail.com',
-                'phonenumber' => '0612457896',
-                'address' => '56 avenue Montaigne, 75008 PARIS'
+                'phonenumber' => '0612457896'
             ],
             [
                 'firstname' => 'Laetitia',
                 'lastname' => 'CASTA',
                 'email' => 'laetitia.casta@model.com',
-                'phonenumber' => '0625897412',
-                'address' => '67 rue de Passy, 75016 PARIS'
+                'phonenumber' => '0625897412'
             ],
             [
                 'firstname' => 'Mathieu',
                 'lastname' => 'KASSOVITZ',
                 'email' => 'mathieu.kassovitz@direct.com',
-                'phonenumber' => '0654789123',
-                'address' => '78 rue Saint-Honoré, 75001 PARIS'
+                'phonenumber' => '0654789123'
             ],
             [
                 'firstname' => 'Audrey',
                 'lastname' => 'TAUTOU',
                 'email' => 'audrey.tautou@actress.com',
-                'phonenumber' => '0698741235',
-                'address' => '89 boulevard Saint-Michel, 75005 PARIS'
+                'phonenumber' => '0698741235'
             ],
             [
                 'firstname' => 'Gaspard',
                 'lastname' => 'ULLIEL',
                 'email' => 'gaspard.ulliel@cinema.fr',
-                'phonenumber' => '0601987654',
-                'address' => '101 rue de Rennes, 75006 PARIS'
+                'phonenumber' => '0601987654'
             ],
             [
                 'firstname' => 'Catherine',
                 'lastname' => 'DENEUVE',
                 'email' => 'catherine.deneuve@france.com',
-                'phonenumber' => '0712345678',
-                'address' => '111 rue de la Pompe, 75016 PARIS'
+                'phonenumber' => '0712345678'
             ],
         ];
         $customers = [];
 
         $address_data = [
-            "country" => "France",
-            "city" => "Marseille",
-            "zipcode" => "13001"
+            'country' => "France",
+            'city' => "Marseille",
+            'zipcode' => "13001",
+            'address' => '5 impasse des mouettes'
         ];
 
         foreach ($customers_data as $customer_data) {
+            // Customer :
             $customer = new Customer();
             $customer->setFirstname($customer_data['firstname']);
             $customer->setLastname($customer_data['lastname']);
-            $customer->setEmail($customer_data['email']);
             $customer->setPhonenumber($customer_data['phonenumber']);
             //$customer->setAddress($customer_data['address']);
             $customer->setCreatedAt(new DateTimeImmutable());
+
             $manager->persist($customer);
+            $manager->flush();
+
+            // Email :
+            $email = new Email();
+            $email->setEmail($customer_data['email']);
+            $email->setCustomer($customer);
+
+            $manager->persist($email);
             $manager->flush();
             
 
@@ -161,7 +157,8 @@ class AppFixtures extends Fixture
             $address->setCountry($address_data["country"]);
             $address->setCity($address_data["city"]);
             $address->setZipcode($address_data["zipcode"]);
-            $address->setCustomer($customer);
+            $address->setAddress($address_data['address']);
+            $address->addCustomer($customer);
 
             $manager->persist($address);
             $manager->flush();

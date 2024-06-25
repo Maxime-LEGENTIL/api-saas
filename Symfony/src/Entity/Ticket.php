@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\TicketRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -28,6 +30,17 @@ class Ticket
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    /**
+     * @var Collection<int, TicketResponse>
+     */
+    #[ORM\OneToMany(targetEntity: TicketResponse::class, mappedBy: 'ticket')]
+    private Collection $ticketResponses;
+
+    public function __construct()
+    {
+        $this->ticketResponses = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -90,6 +103,36 @@ class Ticket
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TicketResponse>
+     */
+    public function getTicketResponses(): Collection
+    {
+        return $this->ticketResponses;
+    }
+
+    public function addTicketResponse(TicketResponse $ticketResponse): static
+    {
+        if (!$this->ticketResponses->contains($ticketResponse)) {
+            $this->ticketResponses->add($ticketResponse);
+            $ticketResponse->setTicket($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTicketResponse(TicketResponse $ticketResponse): static
+    {
+        if ($this->ticketResponses->removeElement($ticketResponse)) {
+            // set the owning side to null (unless already changed)
+            if ($ticketResponse->getTicket() === $this) {
+                $ticketResponse->setTicket(null);
+            }
+        }
 
         return $this;
     }
